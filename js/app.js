@@ -1,22 +1,42 @@
     const data2 = {};
     //Function to show default Modal 
     function showModal(event) {
-        var eventTarget = event.target;
-        var eventTrigger = eventTarget.parentNode;
-        var mymodal = $('#myModal');
-        // console.log(thisa.dataset.alliance);
-        mymodal.find('#modaltitle').text(eventTrigger.dataset.name);
-        mymodal.find('#imagemodal').attr('src', eventTrigger.dataset.image);
-        mymodal.find('#type').text(eventTrigger.dataset.genre);
-        mymodal.find('#habitat').text(eventTrigger.dataset.habitat);
-        mymodal.find('#group').text(eventTrigger.dataset.group);
-        mymodal.find('#description').text(eventTrigger.dataset.description);
-        mymodal.modal('show');
+        let eventTarget = event.target;
+        let eventTrigger = eventTarget.parentNode;
+        let characterUrl = eventTarget.dataset.url
+        //Get data off characters
+        $.ajax({
+            type: "GET",
+            url: characterUrl,
+            success: function (data) {
+                console.log(data);
+                fillModal(data);
+            },
+            dataType: 'json',
+        }); //End first AJAX call
+        const mymodal = $('#myModal');
+
+        function fillModal(data) {
+            const characterName = data.name;
+            const characterMass = data.mass;
+            const characterHeight = data.height;
+            const characterHair = data.hair_color;
+            const characterEye = data.eye_color;
+            // console.log(thisa.dataset.alliance);
+            mymodal.find('#modaltitle').text(characterName);
+            mymodal.find('#imagemodal').attr('src', eventTrigger.dataset.image);
+            mymodal.find('#type').text(characterMass);
+            mymodal.find('#habitat').text(characterHeight);
+            mymodal.find('#group').text(characterEye);
+            mymodal.find('#group2').text(characterHair);
+            mymodal.modal('show');
+        }
+
     }
 
 
     //Array with pokemon images
-    const imagePokemon = {
+    const imageMovies = {
         blastoise: "assets/images/blastoise.jpg",
         ivysaur: "assets/images/ivysaur.jpg",
         bulbasaur: "assets/images/bulbasaur.jpg",
@@ -41,20 +61,66 @@
 
     };
 
-     
+
 
     $(document).ready(function () {
 
-                //Get data from pokedex (all pokemons) first AJAX call
-                $.ajax({
-                    type: "GET",
-                    url: "https://swapi.co/api/films/1/?format=json",
-                    success: function (data) {
-                        console.log(data);
-                    
-                    },
-                    dataType: 'json',
-                }); //End first AJAX call
+        //Get data from pokedex (all pokemons) first AJAX call
+        $.ajax({
+            type: "GET",
+            url: "https://swapi.co/api/films/?format=json",
+            success: function (data) {
+                const dataResults = (data.results);
+                const arrayMovies = Array.prototype.slice.call(dataResults);
+                getMovies(arrayMovies)
+            },
+            dataType: 'json',
+        }); //End first AJAX call
 
 
-                }); //End function ready
+
+        function getMovies(arrayMovies) {
+            console.log(arrayMovies);
+            for (let index = 0; index < arrayMovies.length; index++) {
+                let movie = arrayMovies[index];
+                let movieTitle = movie.title;
+                let movieCharacters = movie.characters
+                let movieEpisode = movie.episode_id;
+                let movieImgSrc ='assets/images/' + movieEpisode + '.jpg'
+            
+                createDomMovies(movieTitle, movieCharacters, movieEpisode,movieImgSrc);
+            }
+        }
+        //Creates the DOM elements for each pokemon and passes data to create the modal
+        function createDomMovies(movieTitle, movieCharacters, movieEpisode, movieImgSrc) {
+            let movieContainer = $("<div></div>")
+            $("#container-movie").append(movieContainer);
+            let movieTitleDOM = $("<h3></h3>").text("Movie Title: " + movieTitle);
+            movieTitleDOM.attr({
+                'class': 'font-weight-bold mt-3'
+            });
+            movieContainer.append(movieTitleDOM);
+            let movieImage = $("<img></img>");
+            movieImage.attr({
+                width: '150px',
+                src: movieImgSrc
+            });
+            movieContainer.append(movieImage);
+            let movieEpisodeDOM = $("<p></p>").text("Episode Id:  " + movieEpisode);
+            movieContainer.append(movieEpisodeDOM);
+            let movieCharDOM = $("<p></p>").text("Characters:  ");
+            movieContainer.append(movieCharDOM)
+            movieCharacters.forEach(character => {
+                var movieCharactersDOM = $("<a></a>").text(character);
+                movieCharactersDOM.attr({
+                    href: '#',
+                    'onclick': "showModal(event)",
+                    'data-url': character,
+                    'class': 'd-block'
+                });
+                movieContainer.append(movieCharactersDOM);
+            });
+        }
+
+
+    }); //End function ready
